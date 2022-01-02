@@ -1,13 +1,13 @@
 from datetime import date
 import dash
 from dash import dcc
-from dash import html
+from dash import html, Input, Output, State
 import plotly.graph_objs as go
 import networkx as nx
 from colour import Color
 
 from requete import Requete
-from document import Tweet
+from document import Document
 from corpus import Corpus
 
 app = dash.Dash(__name__)
@@ -85,9 +85,9 @@ def network_graph(G, max_weight):
     return figure
 
 req = Requete('santiago-de-compostela', since='2022-01-01')
-tweets = Tweet.get_tweets(req)
+documents = Document.get_documents(req)
 
-corpus = Corpus(tweets)
+corpus = Corpus(documents)
 corpus.build_vocab()
 corpus.build_graph()
 
@@ -112,7 +112,7 @@ app.layout = html.Div(
         html.Div(
             style = {'display': 'grid',
              'grid-auto-columns': '1fr',
-             'grid-template-rows': '1fr 1fr 1fr 1fr 1fr',
+             'grid-template-rows': '1fr 1fr 1fr 1fr 1fr 1fr',
              'gap': '30px 30px',
              'padding': '0px 0px 0px 15px'
                 },
@@ -142,14 +142,14 @@ app.layout = html.Div(
                               'width' : '100%'},
                      children = [
                          html.Label('Content :'),
-                    dcc.Input(value='', type='text',placeholder='Content',style={'height':'70%','width':'100%' }),
+                    dcc.Input(id='search', value='', type='text',placeholder='Content',style={'height':'70%','width':'100%' }),
                 ]),
                      html.Div( 
                      style = {'height':'100%',
                               'width' : '100%'},
                      children = [
                          html.Label('User :'),
-                    dcc.Input(value='', type='text',placeholder='User',style={'height':'70%','width':'100%' }),
+                    dcc.Input(id='user', value='', type='text',placeholder='User',style={'height':'70%','width':'100%' }),
                 ]),
                    html.Div( 
                       style = {'display': 'grid',
@@ -186,7 +186,17 @@ app.layout = html.Div(
                           ]
         
         ),
-            
+            html.Div(
+                style = {'display': 'grid',
+       'grid-auto-columns': '1fr',
+       'grid-template-columns': '1fr 1fr',
+       'gap': '10px 10px'
+                 },
+                children = [
+                        html.Div(id='requete', children='requete'),
+                        html.Button('search', id='search-button')
+                    ]
+                ),
                   dcc.DatePickerRange(
         id='my-date-picker-range',
         min_date_allowed=date(1995, 8, 5),
@@ -200,6 +210,17 @@ app.layout = html.Div(
     ])
 ])
 
+
+@app.callback(
+    Output('requete', 'children'),
+    Input('search-button', 'n_clicks'),
+    State('search', 'value'),
+    State('user', 'value')
+)
+def update_output(n_clicks, search_value, user_value):
+    req = Requete(search_value, user=user_value, since='2021-01-01')
+    
+    return req.get_requete()
 
 if __name__ == '__main__':
     app.run_server(debug=True)

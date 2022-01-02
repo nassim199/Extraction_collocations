@@ -1,26 +1,26 @@
 import networkx as nx
 
 class Corpus:
-    def __init__(self, tweets):
-        self.tweets = tweets
+    def __init__(self, docs):
+        self.docs = docs
         self.graph = nx.Graph()
         self.vocab = {}
         self.id_to_vocab = {}
-        self.min_word_frequency = 1
+        self.min_word_frequency = 2
         self.min_cooc_frequency = 1
         
     def build_vocab(self):
         temp_vocab = {}
         i = 1
-        for t in self.tweets:
-            text = t.text
+        for d in self.docs:
+            text = d.text
             words = text.split(" ")
             for w in words:
                 if w in temp_vocab:
                     temp_vocab[w] = (temp_vocab[w][0]+1, temp_vocab[w][1], temp_vocab[w][2])
-                    temp_vocab[w][1].append(t.id)
+                    temp_vocab[w][1].append(d.id)
                 else:
-                    temp_vocab[w] = (1, [t.id], i)
+                    temp_vocab[w] = (1, [d.id], i)
                     i += 1
         self.vocab = {k: v for (k,v) in temp_vocab.items() if v[0] >= self.min_word_frequency}
         self.id_to_vocab = {v[2]: k for (k,v) in self.vocab.items()}
@@ -29,8 +29,8 @@ class Corpus:
         
     def build_graph(self):
         
-        #for w, v in self.vocab.items():
-        #    self.graph.add_nodes_from([(v[2], {"text": w, "count": v[0]})])
+        for w, v in self.vocab.items():
+            self.graph.add_nodes_from([(v[2], {"text": w, "count": v[0]})])
             
         for i, k in enumerate(list(self.id_to_vocab.keys())):
             w = self.id_to_vocab[k]

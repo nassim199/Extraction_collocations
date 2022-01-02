@@ -6,7 +6,7 @@ def singleton(class_):
         return instances[class_]
     return getinstance
 
-@singleton
+
 class Requete:
     def __init__(self, content, lang='', user='', city='', radius='', since='', until=''):
         self.content = content
