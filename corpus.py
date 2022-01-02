@@ -6,8 +6,8 @@ class Corpus:
         self.graph = nx.Graph()
         self.vocab = {}
         self.id_to_vocab = {}
-        self.min_word_frequency = 10
-        self.min_cooc_frequency = 10
+        self.min_word_frequency = 1
+        self.min_cooc_frequency = 1
         
     def build_vocab(self):
         temp_vocab = {}
@@ -28,19 +28,23 @@ class Corpus:
         self.max_weight = 0
         
     def build_graph(self):
-        i = 0
-        for k in list(self.id_to_vocab.keys()):
-            i += 1
-            j = i
+        
+        #for w, v in self.vocab.items():
+        #    self.graph.add_nodes_from([(v[2], {"text": w, "count": v[0]})])
+            
+        for i, k in enumerate(list(self.id_to_vocab.keys())):
             w = self.id_to_vocab[k]
             v = self.vocab[w]
             for k2 in list(self.id_to_vocab.keys())[i:]:
                 w2 = self.id_to_vocab[k2]
                 v2 = self.vocab[w2]
-                j += 1
                 inter = set(v[1]).intersection(set(v2[1]))
                 if (len(inter) > self.min_cooc_frequency):
                     self.max_weight = max(self.max_weight, len(inter))
-                    self.graph.add_edge(i, j, weight=len(inter))
+                    self.graph.add_nodes_from([
+                        (k, {"text": w, "count": v[0]}),
+                        (k2, {"text": w2, "count": v2[0]})
+                        ])
+                    self.graph.add_edge(k, k2, weight=len(inter))
                 
                 

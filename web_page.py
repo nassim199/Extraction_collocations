@@ -17,7 +17,7 @@ def network_graph(G, max_weight):
     # pos = nx.layout.spring_layout(G)
     # pos = nx.layout.circular_layout(G)
     # nx.layout.shell_layout only works for more than 3 nodes
-    pos = nx.drawing.layout.spring_layout(G)
+    pos = nx.drawing.layout.circular_layout(G)
     for node in G.nodes:
         G.nodes[node]['pos'] = list(pos[node])
 
@@ -47,8 +47,8 @@ def network_graph(G, max_weight):
     index = 0
     for node in G.nodes():
         x, y = G.nodes[node]['pos']
-        hovertext = str(node)
-        text = 'text'
+        hovertext = G.nodes[node]['count']
+        text = G.nodes[node]['text']
         node_trace['x'] += tuple([x])
         node_trace['y'] += tuple([y])
         node_trace['hovertext'] += tuple([hovertext])
@@ -57,7 +57,7 @@ def network_graph(G, max_weight):
 
     traceRecode.append(node_trace)
     ################################################################################################################################################################
-    middle_hover_trace = go.Scatter(x=[], y=[], hovertext=[], mode='markers', hoverinfo="text",
+    '''middle_hover_trace = go.Scatter(x=[], y=[], hovertext=[], mode='markers', hoverinfo="text",
                                     marker={'size': 20, 'color': 'LightSkyBlue'},
                                     opacity=0)
 
@@ -71,7 +71,7 @@ def network_graph(G, max_weight):
         middle_hover_trace['hovertext'] += tuple([hovertext])
         index = index + 1
 
-    traceRecode.append(middle_hover_trace)
+    traceRecode.append(middle_hover_trace)'''
     #################################################################################################################################################################
     figure = {
         "data": traceRecode,
@@ -80,19 +80,7 @@ def network_graph(G, max_weight):
                             xaxis={'showgrid': False, 'zeroline': False, 'showticklabels': False},
                             yaxis={'showgrid': False, 'zeroline': False, 'showticklabels': False},
                             height=600,
-                            clickmode='event+select',
-                            annotations=[
-                                dict(
-                                    ax=(G.nodes[edge[0]]['pos'][0] + G.nodes[edge[1]]['pos'][0]) / 2,
-                                    ay=(G.nodes[edge[0]]['pos'][1] + G.nodes[edge[1]]['pos'][1]) / 2, axref='x', ayref='y',
-                                    x=(G.nodes[edge[1]]['pos'][0] * 3 + G.nodes[edge[0]]['pos'][0]) / 4,
-                                    y=(G.nodes[edge[1]]['pos'][1] * 3 + G.nodes[edge[0]]['pos'][1]) / 4, xref='x', yref='y',
-                                    showarrow=True,
-                                    arrowhead=3,
-                                    arrowsize=4,
-                                    arrowwidth=1,
-                                    opacity=1
-                                ) for edge in G.edges]
+                            clickmode='event+select'
                             )}
     return figure
 
