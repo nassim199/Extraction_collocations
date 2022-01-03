@@ -95,17 +95,23 @@ fig = network_graph(corpus.graph, corpus.max_weight)
 
 app.layout = html.Div( 
     style={  'display': 'grid',
+             'height':'100%',
              'grid-auto-columns': '1fr',
-             'grid-template-rows': '1fr 4fr',
-             'gap': '10px 10px'},
+             'grid-template-rows': '150px 4fr',
+             'gap': '10px 10px',
+             'background-color': '#F8F8F8'},
     children=[
-    html.H1(children='Hello Dash'),
+    html.H1(children='Extraction de collocations',style={'height':'100%','font-family': 'Open Sans',
+            'font-style': 'bold',
+            'font-size': '50px',
+            'text-align': 'center',
+            'padding':'0px 0px'}),
 
     html.Div(
     style = {'display': 'grid',
              'grid-auto-columns': '1fr',
              'grid-template-columns': '1fr 2fr',
-             'gap': '10px 10px'
+             'gap': '15px 15px'
         },
     children = [ 
         
@@ -114,12 +120,18 @@ app.layout = html.Div(
              'grid-auto-columns': '1fr',
              'grid-template-rows': '1fr 1fr 1fr 1fr 1fr 1fr',
              'gap': '30px 30px',
-             'padding': '0px 0px 0px 15px'
+             'background-color':'#FFFFFF',
+             'border-radius': '10px',
+             'padding': '20px 10px 0px 15px',
+             'margin':'20px'
                 },
             children=[
                  html.Div(children=[
                     html.Label('Language : '),
                     dcc.Dropdown(
+                     style = {
+                         'padding':'10px'
+                         },
                      options=[
                            {'value':'ar','label':'Arabic (العربية)'},
                            {'value':'de','label':'German (Deutsch)'},
@@ -142,15 +154,21 @@ app.layout = html.Div(
                               'width' : '100%'},
                      children = [
                          html.Label('Content :'),
-                    dcc.Input(id='search', value='', type='text',placeholder='Content',style={'height':'70%','width':'100%' }),
+                         html.Div(
+                         style={'padding':'10px','height':'50%'},
+                         children = [dcc.Input(id='search', value='', type='text',placeholder='Content',style={'height':'100%','width':'98%'})
+                                     ]),
                 ]),
                      html.Div( 
                      style = {'height':'100%',
                               'width' : '100%'},
                      children = [
                          html.Label('User :'),
-                    dcc.Input(id='user', value='', type='text',placeholder='User',style={'height':'70%','width':'100%' }),
-                ]),
+                         html.Div(
+                         style={'padding':'10px','height':'50%'},
+                         children = [dcc.Input(id='user', value='', type='text',placeholder='User',style={'height':'100%','width':'98%'})
+                                     ]),
+                         ]),
                    html.Div( 
                       style = {'display': 'grid',
              'grid-auto-columns': '1fr',
@@ -163,7 +181,10 @@ app.layout = html.Div(
                               'width' : '100%'},
                      children = [
                          html.Label('Location :'),
-                    dcc.Input(value='', type='text',placeholder='Location',style={'height':'70%','width':'100%' }),
+                        html.Div(
+                         style={'padding':'10px','height':'50%'},
+                         children = [dcc.Input(value='', type='text',placeholder='Location',style={'height':'100%','width':'98%'})
+                                     ]),
                 ]),
                 html.Div( 
                      style = {'height':'100%',
@@ -172,7 +193,7 @@ app.layout = html.Div(
                          html.Label('Zone en Km :',style={'padding': '0px 0px 0px 15px'}),
                          html.Div(
                              style ={
-                                 'padding' : '13px 0px 0px 0px'
+                                 'padding' : '23px 0px 0px 0px',
                                  },
                               children = [dcc.Slider(
                               marks={i: '{}'.format(i) for i in range(5,55,5)},
@@ -186,6 +207,22 @@ app.layout = html.Div(
                           ]
         
         ),
+           html.Div( 
+                     style = {'height':'100%',
+                              'width' : '100%'},
+                     children = [
+                         html.Label('Date :'),
+                         html.Div(
+                         style={'padding':'10px','height':'50%'},
+                         children = [dcc.DatePickerRange(
+                             style={'height':'100%','width':'98%'},
+        id='my-date-picker-range',
+        min_date_allowed=date(1995, 8, 5),
+        max_date_allowed=date(2017, 9, 19),
+        initial_visible_month=date(2017, 8, 5),
+        end_date=date(2017, 8, 25)),                                     ]),
+                         ]),  
+            
             html.Div(
                 style = {'display': 'grid',
        'grid-auto-columns': '1fr',
@@ -194,19 +231,29 @@ app.layout = html.Div(
                  },
                 children = [
                         html.Div(id='requete', children='requete'),
-                        html.Button('search', id='search-button')
+                        html.Button('search', id='search-button',style={'width': '200px',
+  'height': '46px',
+  'border-radius': '18px',
+  'background-color': '#1c89ff',
+  'border': 'solid 1px transparent',
+  'color': '#fff',
+  'font-size': '18px',
+  'cursor': 'pointer',
+  'font-weight': '300'})
                     ]
                 ),
-                  dcc.DatePickerRange(
-        id='my-date-picker-range',
-        min_date_allowed=date(1995, 8, 5),
-        max_date_allowed=date(2017, 9, 19),
-        initial_visible_month=date(2017, 8, 5),
-        end_date=date(2017, 8, 25)),
                    ]),
-        dcc.Graph(
+        html.Div(
+        style={
+            'border-radius': '10px',
+            'background-color':'#FFFFFF',
+            'padding':'10px',
+            'margin':'20px'
+            },
+        
+        children=[dcc.Graph(
         id='example-graph',
-        figure=fig),
+        figure=fig),])
     ])
 ])
 
