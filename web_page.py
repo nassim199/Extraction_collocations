@@ -7,7 +7,7 @@ import networkx as nx
 from colour import Color
 
 from requete import Requete
-from document import Document
+from document import Document, Tweet
 from corpus import Corpus
 
 app = dash.Dash(__name__)
@@ -17,7 +17,7 @@ def network_graph(G, max_weight):
     # pos = nx.layout.spring_layout(G)
     # pos = nx.layout.circular_layout(G)
     # nx.layout.shell_layout only works for more than 3 nodes
-    pos = nx.drawing.layout.circular_layout(G)
+    pos = nx.drawing.layout.kamada_kawai_layout(G)
     for node in G.nodes:
         G.nodes[node]['pos'] = list(pos[node])
 
@@ -41,8 +41,8 @@ def network_graph(G, max_weight):
         traceRecode.append(trace)
         index = index + 1
     ###############################################################################################################################################################
-    node_trace = go.Scatter(x=[], y=[], hovertext=[], text=[], mode='markers+text', textposition="bottom center",
-                            hoverinfo="text", marker={'size': 50, 'color': 'LightSkyBlue'})
+    '''node_trace = go.Scatter(x=[], y=[], hovertext=[], text=[], mode='markers+text', textposition="bottom center",
+                            hoverinfo="text", marker={'size': 20, 'color': 'LightSkyBlue'})
 
     index = 0
     for node in G.nodes():
@@ -55,7 +55,22 @@ def network_graph(G, max_weight):
         node_trace['text'] += tuple([text])
         index = index + 1
 
-    traceRecode.append(node_trace)
+    traceRecode.append(node_trace)'''
+    
+    
+
+    index = 0
+    for node in G.nodes():
+        
+        x, y = G.nodes[node]['pos']
+        hovertext = G.nodes[node]['count']
+        text = G.nodes[node]['text']
+        color = G.nodes[node]['color']
+        node_trace = go.Scatter(x=tuple([x]), y=tuple([y]), hovertext=tuple([hovertext]), text=tuple([text]), mode='markers+text', textposition="bottom center",
+                                hoverinfo="text", marker={'size': 20, 'color': color})
+        index = index + 1
+
+        traceRecode.append(node_trace)
     ################################################################################################################################################################
     '''middle_hover_trace = go.Scatter(x=[], y=[], hovertext=[], mode='markers', hoverinfo="text",
                                     marker={'size': 20, 'color': 'LightSkyBlue'},
@@ -85,11 +100,13 @@ def network_graph(G, max_weight):
     return figure
 
 req = Requete('santiago-de-compostela', since='2022-01-01')
-documents = Document.get_documents(req)
+documents = Tweet.load_documents("tweets.csv")
+#documents = Document.get_documents(req)
 
-corpus = Corpus(documents)
+corpus = Corpus(documents, min_word_frequency=25, min_cooc_frequency=20)
 corpus.build_vocab()
 corpus.build_graph()
+corpus.find_communities()
 
 fig = network_graph(corpus.graph, corpus.max_weight)
 

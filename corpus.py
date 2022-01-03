@@ -1,13 +1,15 @@
 import networkx as nx
+import random
+from networkx.algorithms import community
 
 class Corpus:
-    def __init__(self, docs):
+    def __init__(self, docs, min_word_frequency = 10, min_cooc_frequency = 5):
         self.docs = docs
         self.graph = nx.Graph()
         self.vocab = {}
         self.id_to_vocab = {}
-        self.min_word_frequency = 2
-        self.min_cooc_frequency = 1
+        self.min_word_frequency = min_word_frequency
+        self.min_cooc_frequency = min_cooc_frequency
         
     def build_vocab(self):
         temp_vocab = {}
@@ -16,6 +18,8 @@ class Corpus:
             text = d.text
             words = text.split(" ")
             for w in words:
+                #pre-processing verification
+                #if w is stop word then continue
                 if w in temp_vocab:
                     temp_vocab[w] = (temp_vocab[w][0]+1, temp_vocab[w][1], temp_vocab[w][2])
                     temp_vocab[w][1].append(d.id)
@@ -46,5 +50,19 @@ class Corpus:
                         (k2, {"text": w2, "count": v2[0]})
                         ])
                     self.graph.add_edge(k, k2, weight=len(inter))
+                    
+    def find_communities(self):
+        self.communities = list(community.greedy_modularity_communities(self.graph, weight='weight'))
+        self.num_communities = len(self.communities)
+        
+        
+        color = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+                     for i in range(self.num_communities)]
+        
+        for colorIndex, comm in enumerate(self.communities):
+            c = list(comm)
+            for n in c:
+                self.graph.nodes()[n]['color'] = color[colorIndex]
+            
                 
                 
