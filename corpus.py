@@ -1,7 +1,9 @@
 import networkx as nx
 import random
 from networkx.algorithms import community
-
+from nltk.corpus import stopwords
+#import nltk
+#nltk.download('stopwords')
 class Corpus:
     def __init__(self, docs, min_word_frequency = 10, min_cooc_frequency = 5):
         self.docs = docs
@@ -14,16 +16,19 @@ class Corpus:
         
         
     def build_vocab(self):
+        STOP_WORDS = stopwords.words()
         temp_vocab = {}
         i = 1
-        for d in self.docs:
+        for d in self.docs :
             text = d.text
             replacements = (',', '-', '!', '?', '.', ':', ';')
             for r in replacements:
                 text = text.replace(r, ' ')
             words = text.split(" ")
-            for w in words:
+            for w in words :
                 #pre-processing verification
+                if  w in STOP_WORDS :
+                    continue
                 #if w is stop word then continue
                 if w in temp_vocab:
                     temp_vocab[w] = (temp_vocab[w][0]+1, temp_vocab[w][1], temp_vocab[w][2])

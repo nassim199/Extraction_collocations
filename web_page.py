@@ -10,8 +10,7 @@ from requete import Requete, RequeteTwitter, RequeteArxiv
 from document import Document, Tweet
 from corpus import Corpus
 
-app = dash.Dash(__name__)
-
+app = dash.Dash(__name__,suppress_callback_exceptions=True)
 def network_graph(G, max_weight):
 
     # pos = nx.layout.spring_layout(G)
@@ -133,8 +132,35 @@ app.layout = html.Div(
              'gap': '15px 15px'
         },
     children = [ 
-        
         html.Div(
+          children=[ dcc.Tabs(id="Tab", value='Tweeter_Tab', children=[
+        dcc.Tab(label='Tweeter', value='Tweeter_Tab'),
+        dcc.Tab(label='Arxiv', value='Arxiv_Tab'),
+    ]),
+
+    html.Div(id='Content')]
+            ),
+        html.Div(
+        style={
+            'border-radius': '10px',
+            'background-color':'#FFFFFF',
+            'padding':'10px',
+            'margin':'20px'
+            },
+        
+        children=[dcc.Graph(
+        id='example-graph',
+        figure=fig),])
+    ])
+])
+
+
+
+@app.callback(Output('Content', 'children'),
+              Input('Tab', 'value'))
+def render_content(tab):
+    if tab == 'Tweeter_Tab':
+        return html.Div(
             style = {'display': 'grid',
              'grid-auto-columns': '1fr',
              'grid-template-rows': '1fr 1fr 1fr 1fr 1fr 1fr',
@@ -235,11 +261,8 @@ app.layout = html.Div(
                          style={'padding':'10px','height':'50%'},
                          children = [dcc.DatePickerRange(
                              style={'height':'100%','width':'98%'},
-        id='my-date-picker-range',
-        min_date_allowed=date(1995, 8, 5),
-        max_date_allowed=date(2017, 9, 19),
-        initial_visible_month=date(2017, 8, 5),
-        end_date=date(2017, 8, 25)),                                     ]),
+        id='date-picker-range',
+        end_date_placeholder_text='Select a date!'   )                                 ]),
                          ]),  
             
             html.Div(
@@ -262,26 +285,18 @@ app.layout = html.Div(
                     ]
                 ),
                    ]),
-        html.Div(
-        style={
-            'border-radius': '10px',
-            'background-color':'#FFFFFF',
-            'padding':'10px',
-            'margin':'20px'
-            },
-        
-        children=[dcc.Graph(
-        id='example-graph',
-        figure=fig),])
-    ])
-])
-
-
+    elif tab == 'Arxiv_Tab':
+        return html.Div([
+            html.H3('Tab content Arxiv'),
+            #To Do implementation
+        ])
 @app.callback(
     Output('requete', 'children'),
     Input('search-button', 'n_clicks'),
     State('search', 'value'),
-    State('user', 'value')
+    State('user', 'value'),
+    suppress_callback_exceptions=True,
+
 )
 def update_output(n_clicks, search_value, user_value):
     req = RequeteTwitter(search_value, user=user_value, since='2021-01-01')
