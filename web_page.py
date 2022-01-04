@@ -6,18 +6,18 @@ import plotly.graph_objs as go
 import networkx as nx
 from colour import Color
 
-from requete import Requete
-from document import Document
+from requete import Requete, RequeteTwitter, RequeteArxiv
+from document import Document, Tweet
 from corpus import Corpus
 
-app = dash.Dash(__name__)
-
+app = dash.Dash(__name__,suppress_callback_exceptions=True)
 def network_graph(G, max_weight):
 
     # pos = nx.layout.spring_layout(G)
     # pos = nx.layout.circular_layout(G)
     # nx.layout.shell_layout only works for more than 3 nodes
-    pos = nx.drawing.layout.circular_layout(G)
+    pos = nx.drawing.layout.kamada_kawai_layout(G)
+    #pos = nx.drawing.layout.shell_layout(G)
     for node in G.nodes:
         G.nodes[node]['pos'] = list(pos[node])
 
@@ -41,8 +41,8 @@ def network_graph(G, max_weight):
         traceRecode.append(trace)
         index = index + 1
     ###############################################################################################################################################################
-    node_trace = go.Scatter(x=[], y=[], hovertext=[], text=[], mode='markers+text', textposition="bottom center",
-                            hoverinfo="text", marker={'size': 50, 'color': 'LightSkyBlue'})
+    '''node_trace = go.Scatter(x=[], y=[], hovertext=[], text=[], mode='markers+text', textposition="bottom center",
+                            hoverinfo="text", marker={'size': 20, 'color': 'LightSkyBlue'})
 
     index = 0
     for node in G.nodes():
@@ -55,7 +55,22 @@ def network_graph(G, max_weight):
         node_trace['text'] += tuple([text])
         index = index + 1
 
-    traceRecode.append(node_trace)
+    traceRecode.append(node_trace)'''
+    
+    
+
+    index = 0
+    for node in G.nodes():
+        
+        x, y = G.nodes[node]['pos']
+        hovertext = G.nodes[node]['count']
+        text = G.nodes[node]['text']
+        color = G.nodes[node]['color']
+        node_trace = go.Scatter(x=tuple([x]), y=tuple([y]), hovertext=tuple([hovertext]), text=tuple([text]), mode='markers+text', textposition="bottom center",
+                                hoverinfo="text", marker={'size': 20, 'color': color})
+        index = index + 1
+
+        traceRecode.append(node_trace)
     ################################################################################################################################################################
     '''middle_hover_trace = go.Scatter(x=[], y=[], hovertext=[], mode='markers', hoverinfo="text",
                                     marker={'size': 20, 'color': 'LightSkyBlue'},
@@ -84,12 +99,15 @@ def network_graph(G, max_weight):
                             )}
     return figure
 
-req = Requete('santiago-de-compostela', since='2022-01-01')
-documents = Document.get_documents(req)
+req = RequeteArxiv('machine+learning')
+#req = Requete("")
+documents = Tweet.load_documents("tweets.csv")
+#documents = req.get_documents()
 
 corpus = Corpus(documents)
 corpus.build_vocab()
 corpus.build_graph()
+corpus.find_communities()
 
 fig = network_graph(corpus.graph, corpus.max_weight)
 
@@ -114,8 +132,35 @@ app.layout = html.Div(
              'gap': '15px 15px'
         },
     children = [ 
-        
         html.Div(
+          children=[ dcc.Tabs(id="Tab", value='Tweeter_Tab', children=[
+        dcc.Tab(label='Tweeter', value='Tweeter_Tab'),
+        dcc.Tab(label='Arxiv', value='Arxiv_Tab'),
+    ]),
+
+    html.Div(id='Content')]
+            ),
+        html.Div(
+        style={
+            'border-radius': '10px',
+            'background-color':'#FFFFFF',
+            'padding':'10px',
+            'margin':'20px'
+            },
+        
+        children=[dcc.Graph(
+        id='example-graph',
+        figure=fig),])
+    ])
+])
+
+
+
+@app.callback(Output('Content', 'children'),
+              Input('Tab', 'value'))
+def render_content(tab):
+    if tab == 'Tweeter_Tab':
+        return html.Div(
             style = {'display': 'grid',
              'grid-auto-columns': '1fr',
              'grid-template-rows': '1fr 1fr 1fr 1fr 1fr 1fr',
@@ -216,11 +261,8 @@ app.layout = html.Div(
                          style={'padding':'10px','height':'50%'},
                          children = [dcc.DatePickerRange(
                              style={'height':'100%','width':'98%'},
-        id='my-date-picker-range',
-        min_date_allowed=date(1995, 8, 5),
-        max_date_allowed=date(2017, 9, 19),
-        initial_visible_month=date(2017, 8, 5),
-        end_date=date(2017, 8, 25)),                                     ]),
+        id='date-picker-range',
+        end_date_placeholder_text='Select a date!'   )                                 ]),
                          ]),  
             
             html.Div(
@@ -243,29 +285,21 @@ app.layout = html.Div(
                     ]
                 ),
                    ]),
-        html.Div(
-        style={
-            'border-radius': '10px',
-            'background-color':'#FFFFFF',
-            'padding':'10px',
-            'margin':'20px'
-            },
-        
-        children=[dcc.Graph(
-        id='example-graph',
-        figure=fig),])
-    ])
-])
-
-
+    elif tab == 'Arxiv_Tab':
+        return html.Div([
+            html.H3('Tab content Arxiv'),
+            #To Do implementation
+        ])
 @app.callback(
     Output('requete', 'children'),
     Input('search-button', 'n_clicks'),
     State('search', 'value'),
-    State('user', 'value')
+    State('user', 'value'),
+    suppress_callback_exceptions=True,
+
 )
 def update_output(n_clicks, search_value, user_value):
-    req = Requete(search_value, user=user_value, since='2021-01-01')
+    req = RequeteTwitter(search_value, user=user_value, since='2021-01-01')
     
     return req.get_requete()
 
