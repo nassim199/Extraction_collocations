@@ -10,12 +10,17 @@ class Corpus:
         self.id_to_vocab = {}
         self.min_word_frequency = min_word_frequency
         self.min_cooc_frequency = min_cooc_frequency
+        self.max_nodes = 30
+        
         
     def build_vocab(self):
         temp_vocab = {}
         i = 1
         for d in self.docs:
             text = d.text
+            replacements = (',', '-', '!', '?', '.', ':', ';')
+            for r in replacements:
+                text = text.replace(r, ' ')
             words = text.split(" ")
             for w in words:
                 #pre-processing verification
@@ -26,12 +31,18 @@ class Corpus:
                 else:
                     temp_vocab[w] = (1, [d.id], i)
                     i += 1
+               
+        word_counts = [v[0] for v in temp_vocab.values()]
+        word_counts.sort(reverse=True)
+        self.min_word_frequency = word_counts[min(self.max_nodes, len(word_counts)-1)]
         self.vocab = {k: v for (k,v) in temp_vocab.items() if v[0] >= self.min_word_frequency}
         self.id_to_vocab = {v[2]: k for (k,v) in self.vocab.items()}
         
         self.max_weight = 0
         
     def build_graph(self):
+        
+        self.min_cooc_frequency = self.min_word_frequency / 1.5
         
         for w, v in self.vocab.items():
             self.graph.add_nodes_from([(v[2], {"text": w, "count": v[0]})])

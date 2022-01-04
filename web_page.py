@@ -6,7 +6,7 @@ import plotly.graph_objs as go
 import networkx as nx
 from colour import Color
 
-from requete import Requete
+from requete import Requete, RequeteTwitter, RequeteArxiv
 from document import Document, Tweet
 from corpus import Corpus
 
@@ -18,6 +18,7 @@ def network_graph(G, max_weight):
     # pos = nx.layout.circular_layout(G)
     # nx.layout.shell_layout only works for more than 3 nodes
     pos = nx.drawing.layout.kamada_kawai_layout(G)
+    #pos = nx.drawing.layout.shell_layout(G)
     for node in G.nodes:
         G.nodes[node]['pos'] = list(pos[node])
 
@@ -99,11 +100,12 @@ def network_graph(G, max_weight):
                             )}
     return figure
 
-req = Requete('santiago-de-compostela', since='2022-01-01')
+req = RequeteArxiv('machine+learning')
+#req = Requete("")
 documents = Tweet.load_documents("tweets.csv")
-#documents = Document.get_documents(req)
+#documents = req.get_documents()
 
-corpus = Corpus(documents, min_word_frequency=25, min_cooc_frequency=20)
+corpus = Corpus(documents)
 corpus.build_vocab()
 corpus.build_graph()
 corpus.find_communities()
@@ -282,7 +284,7 @@ app.layout = html.Div(
     State('user', 'value')
 )
 def update_output(n_clicks, search_value, user_value):
-    req = Requete(search_value, user=user_value, since='2021-01-01')
+    req = RequeteTwitter(search_value, user=user_value, since='2021-01-01')
     
     return req.get_requete()
 
