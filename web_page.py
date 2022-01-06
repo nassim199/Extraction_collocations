@@ -5,7 +5,7 @@ from dash import html, Input, Output, State
 import plotly.graph_objs as go
 import networkx as nx
 from colour import Color
-
+from dash.exceptions import PreventUpdate
 from requete import Requete, RequeteTwitter, RequeteArxiv
 from document import Document, Tweet
 from corpus import Corpus
@@ -108,6 +108,7 @@ corpus = Corpus(documents)
 corpus.build_vocab()
 corpus.build_graph()
 corpus.find_communities()
+corpus.find_expressions()
 
 fig = network_graph(corpus.graph, corpus.max_weight)
 
@@ -115,7 +116,7 @@ app.layout = html.Div(
     style={  'display': 'grid',
              'height':'100%',
              'grid-auto-columns': '1fr',
-             'grid-template-rows': '150px 4fr',
+             'grid-template-rows': '150px 150px 4fr',
              'gap': '10px 10px',
              'background-color': '#F8F8F8'},
     children=[
@@ -124,7 +125,51 @@ app.layout = html.Div(
             'font-size': '50px',
             'text-align': 'center',
             'padding':'0px 0px'}),
-
+    html.Div(style={'height':'100%',
+            'padding':'0px 0px',
+            'border-radius':'10px',
+            'background-color':'white',
+            'display': 'grid',
+            'grid-auto-columns': '1fr',
+            'text-align': 'center',
+             'grid-template-rows': '1fr 1fr'},
+             children=[
+                 html.Div(style={},
+                          children=[
+                 dcc.Input(id='search',type="text",value='', placeholder="Search Content..", name="search",style={  'padding': '10px',
+  'font-size': '17px',
+  'border': '1px solid grey',
+  'width': '50%',
+  'background': '#f1f1f1'}),
+                 html.Button('search', id='search button',style={'width': '200px',
+  'height': '46px',
+  'background-color': '#1c89ff',
+  'border': 'solid 1px transparent',
+  'color': '#fff',
+  'font-size': '18px',
+  'cursor': 'pointer',
+  'font-weight': '300'}),]),
+                         html.Div( 
+                     style = {
+                              },
+                     children = [
+                         html.Label('Nombre de noeuds :',style={'font-size':'15px'}),
+                          html.Div(
+                             style ={
+                                 'width':'20%',
+                                 'padding' : '23px 0px 0px 0px',
+                                 },
+                              children = [dcc.Slider(
+                              marks={i: '{}'.format(i) for i in range(10,55,10)},
+                              min=10,
+                              max=50,
+                              step=10,
+                              value=10,
+                              verticalHeight = 100,
+                              updatemode='drag'
+                              ),]),               ]),]
+        
+        ),
     html.Div(
     style = {'display': 'grid',
              'grid-auto-columns': '1fr',
@@ -133,14 +178,9 @@ app.layout = html.Div(
         },
     children = [ 
         html.Div(
-          children=[ dcc.Tabs(id="Tab", value='Tweeter_Tab', children=[
-        dcc.Tab(label='Tweeter', value='Tweeter_Tab'),
-        dcc.Tab(label='Arxiv', value='Arxiv_Tab'),
-    ]),
-
-    html.Div(id='Content')]
-            ),
+          ),
         html.Div(
+        id = 'graph',
         style={
             'border-radius': '10px',
             'background-color':'#FFFFFF',
@@ -148,160 +188,29 @@ app.layout = html.Div(
             'margin':'20px'
             },
         
-        children=[dcc.Graph(
+                children=[dcc.Graph(
         id='example-graph',
-        figure=fig),])
+        figure=fig),]
+       )
     ])
 ])
 
 
 
-@app.callback(Output('Content', 'children'),
-              Input('Tab', 'value'))
-def render_content(tab):
-    if tab == 'Tweeter_Tab':
-        return html.Div(
-            style = {'display': 'grid',
-             'grid-auto-columns': '1fr',
-             'grid-template-rows': '1fr 1fr 1fr 1fr 1fr 1fr',
-             'gap': '30px 30px',
-             'background-color':'#FFFFFF',
-             'border-radius': '10px',
-             'padding': '20px 10px 0px 15px',
-             'margin':'20px'
-                },
-            children=[
-                 html.Div(children=[
-                    html.Label('Language : '),
-                    dcc.Dropdown(
-                     style = {
-                         'padding':'10px'
-                         },
-                     options=[
-                           {'value':'ar','label':'Arabic (العربية)'},
-                           {'value':'de','label':'German (Deutsch)'},
-                           {'value':'en','label':'English (English)'},
-                           {'value':'es','label':'Spanish (Español)'},
-                           {'value':'fr','label': 'French (Français)'},
-                           {'value':'hi','label': 'Hindi (हिंदी)'},
-                           {'value':'it','label': 'Italian (Italiano)'},
-                           {'value':'ja','label': 'Japanese (日本語)'},
-                           {'value':'nl','label':'Dutch (Nederlands)'},
-                           {'value':'pt','label':'Portuguese (Português)'},
-                           {'value':'ru','label':'Russian (Русский)'},
-                           {'value':'tr','label':'Turkish (Türkçe)'},
-                           {'value':'zh','label':'Chinese (中文)'}
-                           ],
-                     value=''
-                    ),]),
-                 html.Div( 
-                     style = {'height':'100%',
-                              'width' : '100%'},
-                     children = [
-                         html.Label('Content :'),
-                         html.Div(
-                         style={'padding':'10px','height':'50%'},
-                         children = [dcc.Input(id='search', value='', type='text',placeholder='Content',style={'height':'100%','width':'98%'})
-                                     ]),
-                ]),
-                     html.Div( 
-                     style = {'height':'100%',
-                              'width' : '100%'},
-                     children = [
-                         html.Label('User :'),
-                         html.Div(
-                         style={'padding':'10px','height':'50%'},
-                         children = [dcc.Input(id='user', value='', type='text',placeholder='User',style={'height':'100%','width':'98%'})
-                                     ]),
-                         ]),
-                   html.Div( 
-                      style = {'display': 'grid',
-             'grid-auto-columns': '1fr',
-             'grid-template-columns': '1fr 1fr',
-             'gap': '10px 10px'
-                       },
-                      children = [
-                            html.Div( 
-                     style = {'height':'100%',
-                              'width' : '100%'},
-                     children = [
-                         html.Label('Location :'),
-                        html.Div(
-                         style={'padding':'10px','height':'50%'},
-                         children = [dcc.Input(value='', type='text',placeholder='Location',style={'height':'100%','width':'98%'})
-                                     ]),
-                ]),
-                html.Div( 
-                     style = {'height':'100%',
-                              'width' : '100%'},
-                     children = [
-                         html.Label('Zone en Km :',style={'padding': '0px 0px 0px 15px'}),
-                         html.Div(
-                             style ={
-                                 'padding' : '23px 0px 0px 0px',
-                                 },
-                              children = [dcc.Slider(
-                              marks={i: '{}'.format(i) for i in range(5,55,5)},
-                              min=5,
-                              max=50,
-                              step=5,
-                              value=5,
-                              updatemode='drag'
-                              ), ]),               ]),
-    
-                          ]
-        
-        ),
-           html.Div( 
-                     style = {'height':'100%',
-                              'width' : '100%'},
-                     children = [
-                         html.Label('Date :'),
-                         html.Div(
-                         style={'padding':'10px','height':'50%'},
-                         children = [dcc.DatePickerRange(
-                             style={'height':'100%','width':'98%'},
-        id='date-picker-range',
-        end_date_placeholder_text='Select a date!'   )                                 ]),
-                         ]),  
-            
-            html.Div(
-                style = {'display': 'grid',
-       'grid-auto-columns': '1fr',
-       'grid-template-columns': '1fr 1fr',
-       'gap': '10px 10px'
-                 },
-                children = [
-                        html.Div(id='requete', children='requete'),
-                        html.Button('search', id='search-button',style={'width': '200px',
-  'height': '46px',
-  'border-radius': '18px',
-  'background-color': '#1c89ff',
-  'border': 'solid 1px transparent',
-  'color': '#fff',
-  'font-size': '18px',
-  'cursor': 'pointer',
-  'font-weight': '300'})
-                    ]
-                ),
-                   ]),
-    elif tab == 'Arxiv_Tab':
-        return html.Div([
-            html.H3('Tab content Arxiv'),
-            #To Do implementation
-        ])
+
 @app.callback(
-    Output('requete', 'children'),
-    Input('search-button', 'n_clicks'),
+    Output('graph', 'children'),
+    Input('search button', 'n_clicks'),
     State('search', 'value'),
-    State('user', 'value'),
-    suppress_callback_exceptions=True,
 
 )
-def update_output(n_clicks, search_value, user_value):
-    req = RequeteTwitter(search_value, user=user_value, since='2021-01-01')
-    
-    return req.get_requete()
+def update_output(n_clicks, search_value):
+    if n_clicks is None:
+        raise PreventUpdate
+    else:
+        #TODO 
+        req = RequeteTwitter(search_value, since='2021-01-01')
+        return req.get_requete()
 
 if __name__ == '__main__':
     app.run_server(debug=True)
