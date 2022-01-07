@@ -5,27 +5,32 @@ import plotly.graph_objs as go
 import networkx as nx
 from colour import Color
 from dash.exceptions import PreventUpdate
-from requete import Requete, RequeteTwitter, RequeteArxiv, get_documents_sample
+from requete import RequeteTwitter, RequeteArxiv, get_documents_sample
 from corpus import Corpus
 import pandas as pd
 from dash import dash_table
 
 app = dash.Dash(__name__,suppress_callback_exceptions=True)
+
+#pour l'affichage du graphe, il est inspires a partir de l'example de l'article envoye comme ressource
 def network_graph(G, max_weight):
 
+    #on extrait les positions des noeuds du graphe
     pos = nx.drawing.layout.kamada_kawai_layout(G)
     #pos = nx.drawing.layout.shell_layout(G)
     for node in G.nodes:
         G.nodes[node]['pos'] = list(pos[node])
 
 
-    traceRecode = []  # contains edge_trace, node_trace, middle_node_trace
+    traceRecode = []  # contient les arete et les noeuds
+    
     
     colors = list(Color('lightcoral').range_to(Color('darkred'), len(G.edges())))
     colors = ['rgb' + str(x.rgb) for x in colors]
 
     index = 0
     for edge in G.edges:
+        #plots des differents aretes
         x0, y0 = G.nodes[edge[0]]['pos']
         x1, y1 = G.nodes[edge[1]]['pos']
         weight = float(G.edges[edge]['weight']) / max_weight * 10
@@ -43,7 +48,7 @@ def network_graph(G, max_weight):
 
     index = 0
     for node in G.nodes():
-        
+        #plot des differents noeuds
         x, y = G.nodes[node]['pos']
         hovertext = G.nodes[node]['text'] + " : " + str(G.nodes[node]['count'])
         text = G.nodes[node]['text']
@@ -65,19 +70,28 @@ def network_graph(G, max_weight):
     return figure
 
 
+#on recupere la liste des documents generiques
 documents = get_documents_sample()
 
+#on construit le corpus
 corpus = Corpus(documents)
+#on construit le vocabulaire
 corpus.build_vocab()
+#on construit le graphe
 corpus.build_graph()
+#on extrait les communautes
 corpus.find_communities()
-fig = network_graph(corpus.graph, corpus.max_weight)
+#on plot la figure
+figure = network_graph(corpus.graph, corpus.max_weight)
 
+#on recupere les expressions communes
 expressions = corpus.find_expressions()
 
 df = pd.DataFrame (expressions, columns = ['Les expression courantes :'])
 data = df.to_dict('records')
 
+
+#l'interface de l'application
 app.layout = html.Div( 
     style={  'display': 'grid',
              'height':'100%',
@@ -189,13 +203,13 @@ app.layout = html.Div(
         
                 children=[dcc.Graph(
         id='example-graph',
-        figure=fig),]
+        figure=figure),]
        )
     ])
 ])
 
 
-
+#corps du code lors des evenement de clics et changement du slider
 @app.callback(
     Output('example-graph', 'figure'),
     Output('list','data'),
@@ -206,6 +220,7 @@ app.layout = html.Div(
 
 )
 def update_output(n_clicks,slider_value,search_value,extraction_value):
+    # utilisation des variables globales corpus et data
     global corpus
     global data
     ctx = dash.callback_context
@@ -215,19 +230,23 @@ def update_output(n_clicks,slider_value,search_value,extraction_value):
         if n_clicks is None:
           raise PreventUpdate
         else:
-        #TODO 
+        #si le bouton clique est search
            
            if extraction_value == 'twitter':
+               #si le site choisie est twitter on instancie une requete twitter
                req = RequeteTwitter(search_value)
            else:
+               #sinon on instancie une requete arxiv
                req = RequeteArxiv(search_value)
            
            try:
+               #on recupere les documents
                documents = req.get_documents()
            except:
+               #si il y a une erreur dans l'API on recupere la liste des documents generique
                documents = get_documents_sample()
            
-           
+           #on effectue le meme traitement effectue avant avec les documents generiques
            corpus = Corpus(documents)
            corpus.build_vocab()
            corpus.build_graph(slider_value)
@@ -240,13 +259,15 @@ def update_output(n_clicks,slider_value,search_value,extraction_value):
            
            return figure, data
        else:
-           
+           #si seul le slider a ete change on travaille toujour avec le meme corpus
+           #on reconstruit seulement le graphe et les communautes
+           #vu que les expressions dans le corpus ne changent pas
            corpus.build_graph(max_nodes=slider_value)
            corpus.find_communities()
            figure = network_graph(corpus.graph, corpus.max_weight)
            
            return figure, data
-    else: return fig ,data
+    else: return figure ,data
 
 
 if __name__ == '__main__':

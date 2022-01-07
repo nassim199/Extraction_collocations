@@ -16,6 +16,7 @@ class Requete:
         pass
     
     def get_requete():
+        #chacun des api a besoin d'une chaine speciale pour la recherche
         pass
 
 class RequeteTwitter(Requete):
@@ -54,6 +55,7 @@ class RequeteArxiv(Requete):
         return docs
     
 def get_documents_sample():
+    #ceci est une foction qui retourne une liste generique de documents 
     documents = [
         Document(1, 'I have something for you'),
         Document(2, 'the sun is shining today'),
