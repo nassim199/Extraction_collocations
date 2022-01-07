@@ -13,8 +13,8 @@ from dash import dash_table
 app = dash.Dash(__name__,suppress_callback_exceptions=True)
 def network_graph(G, max_weight):
 
-    #pos = nx.drawing.layout.kamada_kawai_layout(G)
-    pos = nx.drawing.layout.shell_layout(G)
+    pos = nx.drawing.layout.kamada_kawai_layout(G)
+    #pos = nx.drawing.layout.shell_layout(G)
     for node in G.nodes:
         G.nodes[node]['pos'] = list(pos[node])
 
@@ -45,7 +45,7 @@ def network_graph(G, max_weight):
     for node in G.nodes():
         
         x, y = G.nodes[node]['pos']
-        hovertext = G.nodes[node]['count']
+        hovertext = G.nodes[node]['text'] + " : " + str(G.nodes[node]['count'])
         text = G.nodes[node]['text']
         color = G.nodes[node]['color']
         node_trace = go.Scatter(x=tuple([x]), y=tuple([y]), hovertext=tuple([hovertext]), text=tuple([text]), mode='markers+text', textposition="bottom center",
@@ -206,6 +206,8 @@ app.layout = html.Div(
 
 )
 def update_output(n_clicks,slider_value,search_value,extraction_value):
+    global corpus
+    global data
     ctx = dash.callback_context
     if ctx.triggered:
        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -225,8 +227,6 @@ def update_output(n_clicks,slider_value,search_value,extraction_value):
            except:
                documents = get_documents_sample()
            
-           global corpus
-           global data
            
            corpus = Corpus(documents)
            corpus.build_vocab()
@@ -246,7 +246,7 @@ def update_output(n_clicks,slider_value,search_value,extraction_value):
            figure = network_graph(corpus.graph, corpus.max_weight)
            
            return figure, data
-    else: return fig ,None
+    else: return fig ,data
 
 
 if __name__ == '__main__':
