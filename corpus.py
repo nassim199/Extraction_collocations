@@ -25,7 +25,7 @@ class Corpus:
             prev_i = -1
             bi_grams = {}
             for pos, w in enumerate(words):
-                if w == '':
+                if w == '' or w == 'https' or w == '//t':
                     continue
                 if w in vocab:
                     vocab[w] = (vocab[w][0]+1, vocab[w][1], vocab[w][2])
@@ -50,7 +50,7 @@ class Corpus:
         self.max_weight = 0
         
         
-    def build_graph(self, max_nodes = 30):
+    def build_graph(self, max_nodes = 10):
         STOP_WORDS = stopwords.words()
         
         vocab_without_stop_words = {k:v for (k,v) in self.vocab.items() if k not in STOP_WORDS}
@@ -60,7 +60,6 @@ class Corpus:
         
         graph_vocab = {k:v for (k,v) in vocab_without_stop_words.items() if v[0] >= min_word_frequency }
         
-        min_cooc_frequency = min_word_frequency / 1.5
         
         self.graph = nx.Graph()
         
@@ -73,7 +72,10 @@ class Corpus:
                 
                 inter = intersection(v[1], v2[1])
                 
-                if (len(inter) > min_cooc_frequency):
+                score = len(inter) / min(v[0], v2[0])
+                min_score = [0.3, 0.5, 0.7, 0.8, 0.9]
+                
+                if (score > min_score[int(max_nodes/10 - 1)]):
                     
                     self.max_weight = max(self.max_weight, len(inter))
                     
@@ -104,7 +106,9 @@ class Corpus:
                 
         pmis.sort(key=lambda p: p[1], reverse=True)
 
-        print(pmis[:min(num_expressions, len(pmis))])    
+        pmis = pmis[:min(num_expressions, len(pmis))]
+        
+        return [exp for exp, p in pmis]
                 
                 
 #https://www.geeksforgeeks.org/python-intersection-two-lists/
